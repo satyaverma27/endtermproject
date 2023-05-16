@@ -1,5 +1,6 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import Order from '../models/orderModel.js';
+import { buy_a_swagLogger } from './logger.js';
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -16,6 +17,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
   } = req.body;
 
   if (orderItems && orderItems.length === 0) {
+    buy_a_swagLogger.log('error','No order items')
     res.status(400);
     throw new Error('No order items');
   } else {
@@ -33,9 +35,9 @@ const addOrderItems = asyncHandler(async (req, res) => {
       shippingPrice,
       totalPrice,
     });
-
+    buy_a_swagLogger.log('info','Added New item to order')
     const createdOrder = await order.save();
-
+           
     res.status(201).json(createdOrder);
   }
 });
@@ -45,6 +47,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
 // @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ user: req.user._id });
+  buy_a_swagLogger.log('info','Get logged in user orders')
   res.json(orders);
 });
 
@@ -58,8 +61,10 @@ const getOrderById = asyncHandler(async (req, res) => {
   );
 
   if (order) {
+    buy_a_swagLogger.log('info','Get order details of mentioned id')
     res.json(order);
   } else {
+    buy_a_swagLogger.log('error','Order not found')
     res.status(404);
     throw new Error('Order not found');
   }
@@ -82,9 +87,10 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     };
 
     const updatedOrder = await order.save();
-
+    buy_a_swagLogger.log('info','Order amount paid')
     res.json(updatedOrder);
   } else {
+    buy_a_swagLogger.log('error','Order not found')
     res.status(404);
     throw new Error('Order not found');
   }
@@ -101,9 +107,10 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
     order.deliveredAt = Date.now();
 
     const updatedOrder = await order.save();
-
+    buy_a_swagLogger.log('info','Order delivered')
     res.json(updatedOrder);
   } else {
+    buy_a_swagLogger.log('error','Order not found')
     res.status(404);
     throw new Error('Order not found');
   }
@@ -113,6 +120,7 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
+  buy_a_swagLogger.log('info','provide all order details to admin')
   const orders = await Order.find({}).populate('user', 'id name');
   res.json(orders);
 });

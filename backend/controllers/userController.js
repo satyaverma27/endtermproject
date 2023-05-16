@@ -1,7 +1,7 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/userModel.js';
-
+import { buy_a_swagLogger } from './logger.js';
 // @desc    Auth user & get token
 // @route   POST /api/users/auth
 // @access  Public
@@ -12,7 +12,7 @@ const authUser = asyncHandler(async (req, res) => {
 
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
-
+    buy_a_swagLogger.log('info','User authentication successful')
     res.json({
       _id: user._id,
       name: user.name,
@@ -20,6 +20,7 @@ const authUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
     });
   } else {
+    buy_a_swagLogger.log('error','Invalid email or password')
     res.status(401);
     throw new Error('Invalid email or password');
   }
@@ -34,6 +35,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const userExists = await User.findOne({ email });
 
   if (userExists) {
+    buy_a_swagLogger.log('error','User already exist')
     res.status(400);
     throw new Error('User already exists');
   }
@@ -45,6 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (user) {
+    buy_a_swagLogger.log('info','New user registrated')
     generateToken(res, user._id);
 
     res.status(201).json({
@@ -54,6 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
     });
   } else {
+    buy_a_swagLogger.log('error','Invalid user data')
     res.status(400);
     throw new Error('Invalid user data');
   }
@@ -67,6 +71,7 @@ const logoutUser = (req, res) => {
     httpOnly: true,
     expires: new Date(0),
   });
+  buy_a_swagLogger.log('info','Logged out successful')
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
@@ -77,6 +82,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
+    buy_a_swagLogger.log('info','Provide profile of user with given id')
     res.json({
       _id: user._id,
       name: user.name,
@@ -84,6 +90,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
     });
   } else {
+    buy_a_swagLogger.log('error','User not found')
     res.status(404);
     throw new Error('User not found');
   }
@@ -104,7 +111,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     }
 
     const updatedUser = await user.save();
-
+    buy_a_swagLogger.log('info','User profile updated')
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
@@ -112,6 +119,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       isAdmin: updatedUser.isAdmin,
     });
   } else {
+    buy_a_swagLogger.log('error','User not found')
     res.status(404);
     throw new Error('User not found');
   }
@@ -122,6 +130,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find({});
+  buy_a_swagLogger.log('info','All user info provided to admin')
   res.json(users);
 });
 
@@ -134,11 +143,14 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (user) {
     if (user.isAdmin) {
       res.status(400);
+      buy_a_swagLogger.log('error','Cannot delete admin user')
       throw new Error('Can not delete admin user');
     }
+    buy_a_swagLogger.log('info','User Removed')
     await User.deleteOne({ _id: user._id });
     res.json({ message: 'User removed' });
   } else {
+    buy_a_swagLogger.log('error','User not found')
     res.status(404);
     throw new Error('User not found');
   }
@@ -151,8 +163,10 @@ const getUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select('-password');
 
   if (user) {
+    buy_a_swagLogger.log('info','User info with mentioned id provided')
     res.json(user);
   } else {
+    buy_a_swagLogger.log('error','User not found')
     res.status(404);
     throw new Error('User not found');
   }
@@ -169,7 +183,7 @@ const updateUser = asyncHandler(async (req, res) => {
     user.isAdmin = Boolean(req.body.isAdmin);
 
     const updatedUser = await user.save();
-
+    buy_a_swagLogger.log('info','User details updated by admin')
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
@@ -177,6 +191,7 @@ const updateUser = asyncHandler(async (req, res) => {
       isAdmin: updatedUser.isAdmin,
     });
   } else {
+    buy_a_swagLogger.log('error','User not found')
     res.status(404);
     throw new Error('User not found');
   }

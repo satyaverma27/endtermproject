@@ -1,6 +1,6 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import Product from '../models/productModel.js';
-
+import { buy_a_swagLogger } from './logger.js';
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
@@ -23,6 +23,7 @@ const getProducts = asyncHandler(async (req, res) => {
     .skip(pageSize * (page - 1));
 
   res.json({ products, page, pages: Math.ceil(count / pageSize) });
+  buy_a_swagLogger.log('info','All Products info provided')
 });
 
 // @desc    Fetch single product
@@ -31,8 +32,11 @@ const getProducts = asyncHandler(async (req, res) => {
 const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (product) {
+    buy_a_swagLogger.log('info','Product info of given id provided')
     return res.json(product);
   }
+
+  buy_a_swagLogger.log('error','Product not found')
   res.status(404);
   throw new Error('Resource not found');
 });
@@ -52,7 +56,7 @@ const createProduct = asyncHandler(async (req, res) => {
     numReviews: 0,
     description: 'Sample description',
   });
-
+  buy_a_swagLogger.log('info','New product added to website')
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
 });
@@ -76,8 +80,10 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.countInStock = countInStock;
 
     const updatedProduct = await product.save();
+    buy_a_swagLogger.log('info','Product details with mentioned id updated')
     res.json(updatedProduct);
   } else {
+    buy_a_swagLogger.log('error','Product not found')
     res.status(404);
     throw new Error('Product not found');
   }
@@ -91,8 +97,10 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
   if (product) {
     await Product.deleteOne({ _id: product._id });
+    buy_a_swagLogger.log('info','Product Removed successfully')
     res.json({ message: 'Product removed' });
   } else {
+    buy_a_swagLogger.log('info','Product not found')
     res.status(404);
     throw new Error('Product not found');
   }
@@ -112,6 +120,7 @@ const createProductReview = asyncHandler(async (req, res) => {
     );
 
     if (alreadyReviewed) {
+      buy_a_swagLogger.log('error','Product already reviewd')
       res.status(400);
       throw new Error('Product already reviewed');
     }
@@ -132,8 +141,10 @@ const createProductReview = asyncHandler(async (req, res) => {
       product.reviews.length;
 
     await product.save();
+    buy_a_swagLogger.log('info','Product review added')
     res.status(201).json({ message: 'Review added' });
   } else {
+    buy_a_swagLogger.log('error','Product not found')
     res.status(404);
     throw new Error('Product not found');
   }
@@ -143,8 +154,9 @@ const createProductReview = asyncHandler(async (req, res) => {
 // @route   GET /api/products/top
 // @access  Public
 const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).sort({ rating: -1 }).limit(3);
 
+  const products = await Product.find({}).sort({ rating: -1 }).limit(3);
+ buy_a_swagLogger.log('info','Top rated products returned')
   res.json(products);
 });
 
